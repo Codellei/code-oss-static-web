@@ -31,7 +31,7 @@ it currently selects `company-standard`.
 
 | Profile | Proposed API grants | Purpose |
 | --- | --- | --- |
-| `company-standard` | None | Reviewed Open VSX gallery; no additional extensions bundled by default. |
+| `company-standard` | None | Open VSX-enabled profile; no additional extensions bundled by default. |
 | `baseline-static` | None | Exception-free secure baseline. |
 
 The `company-standard` gallery connects to approved Open VSX registry/CDN origins.

@@ -2006,10 +2006,9 @@ python-version: ${{ steps.versions.outputs.python }}
                     }
                 )
             )
+            empty_extension_index = json.dumps({'schemaVersion': 1, 'extensions': []})
             for filename in ('extensions.json', 'additional-extensions.json'):
-                (root / filename).write_text(
-                    json.dumps({'schemaVersion': 1, 'extensions': []})
-                )
+                (root / filename).write_text(empty_extension_index)
 
             for mode, policy in (
                 ('disabled', 'static'),

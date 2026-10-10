@@ -43,7 +43,7 @@ ID/version. It does not establish extension activation, reload persistence,
 compatibility of other extensions, or enterprise deployment support.
 
 Automated browser tests check the gallery configuration, CSP/network origins,
-host telemetry, strict offline baseline, and the live Open VSX query endpoint.
+host telemetry, strict self-only baseline, and the live Open VSX query endpoint.
 They do **not** test workbench-driven VSIX installation. Registry/CDN origin
 approval is a network policy decision, not an extension compatibility or
 security approval. For a scoped branded-browser or managed-deployment support

@@ -93,6 +93,7 @@ For every supported deployment tuple, record at least:
 - proxy/network path used by the deployment;
 - static-hosting URL and base path;
 - normal persistent-storage mode;
+- exact IDs/versions of any company-supported gallery-installed extensions (or `none`);
 - qualification date and operator/reviewer.
 
 Use the [enterprise browser qualification record template](docs/enterprise-browser-qualification-record.md)
@@ -118,6 +119,13 @@ clean, non-private browser profile without development flags:
    an HTML fallback, blocked, substituted, or redirected to an unqualified cross-origin asset host.
 7. Record any browser policy exceptions or known deployment limitations in the same qualification
    record.
+8. For `company-standard`, use the normal workbench flow to search Open VSX, install
+   at least one browser-compatible extension, exercise its activation/primary workflow, and
+   verify installation and activation persist after reload. Record the exact extension ID/version
+   and evidence for search, install, activation, and reload. Test each additional
+   gallery-installed extension for which company support is claimed. For `baseline-static`,
+   record this check as not applicable because the gallery is disabled; self-only access
+   is not offline support.
 
 A missing or stale manual record means the branded deployment has Playwright engine evidence only,
 not a company browser support promise.

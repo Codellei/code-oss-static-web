@@ -3,7 +3,8 @@
 The release ships **one attested `.tar.gz` distribution**. No release-specific
 extension or proposed-API exception is built in. The default tracked
 `company-standard` profile now supplies an **Open VSX-enabled** extension
-gallery through reviewed registry/CDN origins; `baseline-static` remains an offline, self-only alternative.
+gallery through reviewed registry/CDN origins; `baseline-static` is a gallery-free,
+self-only alternative. Neither profile supports offline operation.
 Both profiles disable Code OSS host telemetry and webviews.
 
 ## Run the published Docker image

@@ -1973,7 +1973,14 @@ python-version: ${{ steps.versions.outputs.python }}
         title = 'Code OSS Static Web'
         online_html = make_static.build_index(title, network_ready, 'open-vsx')
         offline_html = make_static.build_index(title, network_offline, 'disabled')
-        self.assertIn('https://open-vsx.org', online_html)
+        self.assertIn(
+            "connect-src 'self' https://open-vsx.org https://openvsx.eclipsecontent.org;",
+            online_html,
+        )
+        self.assertIn(
+            "img-src 'self' https://open-vsx.org https://openvsx.eclipsecontent.org",
+            online_html,
+        )
         self.assertNotIn('https://open-vsx.org', offline_html)
 
         online_bootstrap = make_static.build_bootstrap(webview, 'open-vsx')

@@ -51,7 +51,7 @@ def build_index(title: str, network: dict[str, object], gallery_mode: str) -> st
     title_tag = '<title>Code OSS Static Web</title>'
     index = INDEX.replace(title_tag, f'<title>{safe_title}</title>')
     if gallery_mode == 'open-vsx':
-        origins = ' '.join(expected)
+        origins = ' '.join(["'self'", *OPEN_VSX_ORIGINS])
         index = index.replace("connect-src 'self';", f'connect-src {origins};')
         image_policy = "img-src 'self' data: blob:;"
         index = index.replace(image_policy, f'img-src {origins} data: blob;')

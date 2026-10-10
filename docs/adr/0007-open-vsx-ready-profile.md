@@ -1,6 +1,6 @@
 # ADR-0007: Select an explicit Open VSX ready-to-use profile
 
-- Status: Proposed (requires network and install-flow qualification)
+- Status: Accepted
 - Date: 2026-10-10
 - Supersedes: [ADR-0006](0006-gallery-network-policy.md) for `company-standard` only
 
@@ -34,6 +34,21 @@ Nginx's COEP policy and live registry CORS/redirect behavior must be checked
 with a browser install test, not inferred from a successful static boot.
 Tests must enforce host telemetry off, explicit gallery URLs, no arbitrary
 origins, and strict baseline behavior.
+
+A manual smoke check reported on 2026-10-10 found that a built `company-standard`
+distribution could search Open VSX and install an extension through the normal
+workbench flow. This supports acceptance of the profile design, but the report
+does not identify an immutable artifact, browser/deployment tuple, or extension
+ID/version. It does not establish extension activation, reload persistence,
+compatibility of other extensions, or enterprise deployment support.
+
+Automated browser tests check the gallery configuration, CSP/network origins,
+host telemetry, strict self-only baseline, and the live Open VSX query endpoint.
+They do **not** test workbench-driven VSIX installation. Registry/CDN origin
+approval is a network policy decision, not an extension compatibility or
+security approval. For a scoped branded-browser or managed-deployment support
+claim, follow [manual deployment qualification](../../COMPATIBILITY.md#manual-deployment-qualification)
+and capture evidence with the [qualification record](../enterprise-browser-qualification-record.md).
 
 ## Enforcement
 

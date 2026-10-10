@@ -13,7 +13,7 @@ it rather than rewriting history.
 | [0004](0004-proposed-api-policy.md) | Scope proposed API grants to documented extension IDs | Accepted |
 | [0005](0005-release-promotion.md) | Separate qualification, release rebuild, attestation, and promotion | Accepted |
 | [0006](0006-gallery-network-policy.md) | Keep gallery and runtime network access disabled in strict baseline | Superseded for company-standard |
-| [0007](0007-open-vsx-ready-profile.md) | Open VSX ready-to-use company profile; strict offline baseline remains | Proposed |
+| [0007](0007-open-vsx-ready-profile.md) | Open VSX-enabled company profile; strict self-only baseline remains | Accepted |
 
 See [Architecture](../architecture.md) for the end-to-end data flow and
 [Threat model](../../security/threat-model.md) for threats, controls, tests, owners, assumptions, and

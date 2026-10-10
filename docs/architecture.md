@@ -40,7 +40,7 @@ design choices are recorded in the [ADR index](adr/README.md).
 | Immutable publication | After attestation, publishes the immutable GitHub Release and immutable GHCR image. GitHub Release consumes `release-candidate` plus attestation evidence; GHCR consumes the canonical `release-static-dist`. | [.github/workflows/release.yml](../.github/workflows/release.yml), [.github/actions/publish-github-release/action.yml](../.github/actions/publish-github-release/action.yml), [.github/actions/publish-oci/action.yml](../.github/actions/publish-oci/action.yml) |
 | Promotion | Resolves a published immutable release, verifies its attestations and policy-bound identity, records canary/stable state as GitHub Deployments, and deploys stable Pages without rebuilding. | [.github/workflows/promote.yml](../.github/workflows/promote.yml), [config/promotion-policy.json](../config/promotion-policy.json), [scripts/promotion.py](../scripts/promotion.py), [.github/actions/publish-pages/action.yml](../.github/actions/publish-pages/action.yml) |
 | Publication recovery | Reuses retained artifacts from a completed pre-publication release run for immutable GitHub Release/GHCR recovery; promotion recovery resolves durable immutable release assets and moves channel state without rebuilding. | [.github/workflows/recover-release-publication.yml](../.github/workflows/recover-release-publication.yml), [.github/workflows/promote.yml](../.github/workflows/promote.yml), [OPERATIONS.md](../OPERATIONS.md) |
-| Browser runtime | Loads only static same-origin assets, enables workspace trust, keeps webviews disabled and permits a reviewed Open VSX gallery only in the default company profile, and persists browser/workbench state in origin-scoped browser storage. | [scripts/make_static.py](../scripts/make_static.py), [tests/e2e/security.spec.cjs](../tests/e2e/security.spec.cjs), [tests/e2e/network-policy.spec.cjs](../tests/e2e/network-policy.spec.cjs), [tests/e2e/workbench.spec.cjs](../tests/e2e/workbench.spec.cjs) |
+| Browser runtime | Loads only static same-origin assets, enables workspace trust, keeps webviews disabled and permits Open VSX only through the reviewed registry/CDN origins in the default company profile, and persists browser/workbench state in origin-scoped browser storage. | [scripts/make_static.py](../scripts/make_static.py), [tests/e2e/security.spec.cjs](../tests/e2e/security.spec.cjs), [tests/e2e/network-policy.spec.cjs](../tests/e2e/network-policy.spec.cjs), [tests/e2e/workbench.spec.cjs](../tests/e2e/workbench.spec.cjs) |
 
 ## End-to-end build and release data flow
 
@@ -385,7 +385,7 @@ present in the jobs that execute upstream build code.
 - [ADR-0004: Scope proposed API grants to documented extension IDs](adr/0004-proposed-api-policy.md)
 - [ADR-0005: Separate qualification, release rebuild, attestation, and promotion](adr/0005-release-promotion.md)
 - [ADR-0006: Keep gallery disabled in the strict baseline](adr/0006-gallery-network-policy.md)
-- [ADR-0007: Reviewed Open VSX gallery in the company profile](adr/0007-open-vsx-ready-profile.md)
+- [ADR-0007: Open VSX-enabled company profile](adr/0007-open-vsx-ready-profile.md)
 
 ## Immutable builder boundary
 

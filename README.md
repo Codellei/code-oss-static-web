@@ -21,7 +21,7 @@ MIT-licensed Code - OSS revision without maintaining a fork of Microsoft's repos
 - telemetry disabled in the project runtime;
 - fail-closed webview mode on generic static hosting;
 - profile-scoped `connect-src` CSP (self-only baseline; reviewed Open VSX origins in company profile);
-- deterministic tar/zip packaging and SHA-256 verification;
+- deterministic `.tar.gz` packaging and SHA-256 verification;
 - Playwright qualification for static boot, editing, commands, settings, workspace trust, network policy and extension host;
 - browser-extension activation plus global-state/filesystem persistence and language-service qualification;
 - split build/browser/package/attest jobs using the same canonical `dist/`;
@@ -62,7 +62,7 @@ schema-validated profiles in `config/profiles/`. The default selection is `compa
 
 | Profile | Proposed API grants | Purpose |
 | --- | --- | --- |
-| `company-standard` | None | Open VSX gallery with reviewed CSP/network origins; telemetry disabled. |
+| `company-standard` | None | Open VSX-enabled profile with reviewed CSP/network origins; telemetry disabled. |
 | `baseline-static` | None | Exception-free secure baseline. |
 
 Both profiles disable host telemetry and webviews. `baseline-static` remains

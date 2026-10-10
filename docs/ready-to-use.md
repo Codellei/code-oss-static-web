@@ -2,8 +2,9 @@
 
 The release ships **one attested `.tar.gz` distribution**. No release-specific
 extension or proposed-API exception is built in. The default tracked
-`company-standard` profile now supplies a reviewed **Open VSX** extension
-gallery; `baseline-static` remains an offline, self-only alternative.
+`company-standard` profile now supplies an **Open VSX-enabled** extension
+gallery through reviewed registry/CDN origins; `baseline-static` is a gallery-free,
+self-only alternative. Neither profile supports offline operation.
 Both profiles disable Code OSS host telemetry and webviews.
 
 ## Run the published Docker image
@@ -107,5 +108,13 @@ their own telemetry/network requests**. Require explicit company review before
 broad deployment. Verify live search, compatible web-VSIX install/activation,
 reload persistence, CORS/COEP responses, mixed-content rules, and the exact
 proxy/browser combination. The browser qualification suite also probes the live Open VSX query endpoint
-from the page, enforcing CSP/CORS access; it does not yet qualify VSIX
-installation across the complete candidate list or certify arbitrary extensions.
+from the page, enforcing CSP/CORS access; it does not test workbench-driven
+VSIX installation or certify arbitrary extensions. The 2026-10-10 manual
+search/install smoke check described in [ADR-0007](adr/0007-open-vsx-ready-profile.md)
+does not replace deployment qualification. Before claiming gallery-install
+support for a particular environment, record the immutable artifact and
+profile digests, browser/OS/host/proxy tuple, tested extension ID/version,
+install/activation/reload outcomes, and evidence references. Enterprise
+support additionally requires the independent review described in
+[Compatibility](../COMPATIBILITY.md#manual-deployment-qualification) and the
+[qualification record template](enterprise-browser-qualification-record.md).

@@ -42,10 +42,9 @@ if runtime.get('gallery', {}).get('mode') not in ('disabled', 'open-vsx'):
     raise SystemExit('unsupported runtime gallery')
 expected_connect_sources = ["'self'"]
 if runtime['gallery']['mode'] == 'open-vsx':
-    expected_connect_sources.extend(
-        ['https://open-vsx.org', 'https://openvsx.eclipsecontent.org']
-    )
-connect_src = re.search(r'(?:^|;)\\s*connect-src\\s+([^;]+);', index)
+    gallery_origins = ['https://open-vsx.org', 'https://openvsx.eclipsecontent.org']
+    expected_connect_sources.extend(gallery_origins)
+connect_src = re.search(r'(?:^|;)\s*connect-src\s+([^;]+);', index)
 if connect_src is None or connect_src.group(1).split() != expected_connect_sources:
     raise SystemExit('CSP connect-src must match the selected gallery policy')
 

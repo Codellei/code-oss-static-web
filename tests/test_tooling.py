@@ -1998,8 +1998,12 @@ python-version: ${{ steps.versions.outputs.python }}
                 target.write_text('')
             (root / 'deployment-profile.json').write_text(
                 json.dumps(
-                    {'schemaVersion': 1, 'id': 'test', 'configSha256': 'a' * 64,
-                     'bindings': {}}
+                    {
+                        'schemaVersion': 1,
+                        'id': 'test',
+                        'configSha256': 'a' * 64,
+                        'bindings': {},
+                    }
                 )
             )
             for filename in ('extensions.json', 'additional-extensions.json'):

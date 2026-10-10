@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -29,8 +30,6 @@ if missing:
     raise SystemExit('missing static files: ' + ', '.join(missing))
 
 index = (root / 'index.html').read_text(encoding='utf-8')
-if "connect-src 'self'" not in index:
-    raise SystemExit('default CSP must restrict connect-src to self')
 
 additional = json.loads((root / 'additional-extensions.json').read_text(encoding='utf-8'))
 if additional.get('schemaVersion') != 1 or not isinstance(additional.get('extensions'), list):
@@ -38,7 +37,16 @@ if additional.get('schemaVersion') != 1 or not isinstance(additional.get('extens
 
 runtime = json.loads((root / 'runtime.json').read_text(encoding='utf-8'))
 if runtime.get('telemetry') is not False:
-    raise SystemExit('telemetry must be false in base runtime')
+    raise SystemExit('telemetry must be disabled')
+if runtime.get('gallery', {}).get('mode') not in ('disabled', 'open-vsx'):
+    raise SystemExit('unsupported runtime gallery')
+expected_connect_sources = ["'self'"]
+if runtime['gallery']['mode'] == 'open-vsx':
+    gallery_origins = ['https://open-vsx.org', 'https://openvsx.eclipsecontent.org']
+    expected_connect_sources.extend(gallery_origins)
+connect_src = re.search(r'(?:^|;)\s*connect-src\s+([^;]+);', index)
+if connect_src is None or connect_src.group(1).split() != expected_connect_sources:
+    raise SystemExit('CSP connect-src must match the selected gallery policy')
 
 profile = json.loads((root / 'deployment-profile.json').read_text(encoding='utf-8'))
 if profile.get('schemaVersion') != 1 or not isinstance(profile.get('id'), str):
@@ -50,6 +58,13 @@ if not isinstance(profile.get('bindings'), dict):
     raise SystemExit('deployment profile bindings missing')
 
 bootstrap = (root / 'static-bootstrap.mjs').read_text(encoding='utf-8')
+if (
+    runtime['gallery']['mode'] == 'open-vsx'
+    and 'https://open-vsx.org/vscode/gallery' not in bootstrap
+):
+    raise SystemExit('Open VSX gallery bootstrap config missing')
+if 'enableTelemetry: false' not in bootstrap:
+    raise SystemExit('host telemetry must remain disabled')
 if 'invalid.invalid' not in bootstrap:
     raise SystemExit('fail-closed webview guard missing')
 if 'workbench.web.main.internal.js' not in bootstrap:

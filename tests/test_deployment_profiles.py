@@ -17,11 +17,15 @@ from common import BuildError  # noqa: E402
 
 
 class DeploymentProfileTests(unittest.TestCase):
-    def test_selected_profile_preserves_current_company_policy(self):
+    def test_selected_profile_has_reviewed_gallery_origins(self):
         profile = deployment_profile.load_selected_profile()
         self.assertEqual(profile['id'], 'company-standard')
         self.assertEqual(profile['documents']['runtime']['telemetry'], False)
-        self.assertEqual(profile['documents']['network']['allowedOrigins'], ['self'])
+        self.assertEqual(
+            profile['documents']['network']['allowedOrigins'],
+            ['self', 'https://open-vsx.org', 'https://openvsx.eclipsecontent.org'],
+        )
+        self.assertEqual(profile['documents']['runtime']['gallery']['mode'], 'open-vsx')
         self.assertEqual(profile['documents']['webview']['mode'], 'disabled')
         self.assertEqual(profile['documents']['proposedApi']['grants'], {})
 
@@ -42,8 +46,8 @@ class DeploymentProfileTests(unittest.TestCase):
             for relative in (
                 'config/deployment.json',
                 'config/profiles/company-standard.json',
-                'config/policies/runtime/static.json',
-                'config/policies/network/static.json',
+                'config/policies/runtime/ready.json',
+                'config/policies/network/ready.json',
                 'config/policies/product/static.json',
                 'config/policies/proposed-api/none.json',
                 'config/policies/webview/disabled.json',
@@ -58,7 +62,7 @@ class DeploymentProfileTests(unittest.TestCase):
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(source, target)
             before = deployment_profile.load_selected_profile(root=root)['configSha256']
-            runtime = root / 'config/policies/runtime/static.json'
+            runtime = root / 'config/policies/runtime/ready.json'
             data = json.loads(runtime.read_text())
             data['productName'] = 'Changed'
             runtime.write_text(json.dumps(data) + '\n')

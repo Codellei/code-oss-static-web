@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -29,8 +30,6 @@ if missing:
     raise SystemExit('missing static files: ' + ', '.join(missing))
 
 index = (root / 'index.html').read_text(encoding='utf-8')
-if "connect-src 'self'" not in index:
-    raise SystemExit('default CSP must restrict connect-src to self')
 
 additional = json.loads((root / 'additional-extensions.json').read_text(encoding='utf-8'))
 if additional.get('schemaVersion') != 1 or not isinstance(additional.get('extensions'), list):
@@ -41,9 +40,14 @@ if runtime.get('telemetry') is not False:
     raise SystemExit('telemetry must be disabled')
 if runtime.get('gallery', {}).get('mode') not in ('disabled', 'open-vsx'):
     raise SystemExit('unsupported runtime gallery')
+expected_connect_sources = ["'self'"]
 if runtime['gallery']['mode'] == 'open-vsx':
-    if 'https://open-vsx.org' not in index or 'https://openvsx.eclipsecontent.org' not in index:
-        raise SystemExit('Open VSX CSP origins missing')
+    expected_connect_sources.extend(
+        ['https://open-vsx.org', 'https://openvsx.eclipsecontent.org']
+    )
+connect_src = re.search(r'(?:^|;)\\s*connect-src\\s+([^;]+);', index)
+if connect_src is None or connect_src.group(1).split() != expected_connect_sources:
+    raise SystemExit('CSP connect-src must match the selected gallery policy')
 
 profile = json.loads((root / 'deployment-profile.json').read_text(encoding='utf-8'))
 if profile.get('schemaVersion') != 1 or not isinstance(profile.get('id'), str):

@@ -1983,6 +1983,68 @@ python-version: ${{ steps.versions.outputs.python }}
         self.assertIn('enableTelemetry: false', online_bootstrap)
         self.assertIn('enableTelemetry: false', offline_bootstrap)
 
+    def test_structural_smoke_enforces_profile_specific_csp(self):
+        webview = json.loads((ROOT / 'config/policies/webview/disabled.json').read_text())
+        required = (
+            'out/nls.messages.js',
+            'out/vs/workbench/workbench.web.main.internal.js',
+            'out/vs/workbench/workbench.web.main.internal.css',
+        )
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            for relative in required:
+                target = root / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text('')
+            (root / 'deployment-profile.json').write_text(
+                json.dumps(
+                    {'schemaVersion': 1, 'id': 'test', 'configSha256': 'a' * 64,
+                     'bindings': {}}
+                )
+            )
+            for filename in ('extensions.json', 'additional-extensions.json'):
+                (root / filename).write_text(
+                    json.dumps({'schemaVersion': 1, 'extensions': []})
+                )
+
+            for mode, policy in (
+                ('disabled', 'static'),
+                ('open-vsx', 'ready'),
+            ):
+                with self.subTest(mode=mode):
+                    runtime = json.loads(
+                        (ROOT / f'config/policies/runtime/{policy}.json').read_text()
+                    )
+                    network = json.loads(
+                        (ROOT / f'config/policies/network/{policy}.json').read_text()
+                    )
+                    (root / 'runtime.json').write_text(json.dumps(runtime))
+                    index = make_static.build_index('Code OSS Static Web', network, mode)
+                    (root / 'index.html').write_text(index)
+                    (root / 'static-bootstrap.mjs').write_text(
+                        make_static.build_bootstrap(webview, mode)
+                    )
+
+                    def smoke():
+                        return subprocess.run(
+                            [sys.executable, str(ROOT / 'scripts/smoke_static.py'), str(root)],
+                            capture_output=True,
+                            text=True,
+                            check=False,
+                        )
+
+                    result = smoke()
+                    self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+
+                    altered = index.replace(
+                        "connect-src 'self'",
+                        "connect-src 'self' https://unapproved.example",
+                    )
+                    (root / 'index.html').write_text(altered)
+                    result = smoke()
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn('CSP connect-src', result.stderr + result.stdout)
+
     def test_default_static_policy_is_fail_closed(self):
         self.assertIn("connect-src 'self'", make_static.INDEX)
         self.assertNotIn('unsafe-eval', make_static.INDEX)

@@ -439,9 +439,12 @@ jobs:
           --output .work/runtime-components.json
 
       - name: Archive canonical static distribution
+        shell: bash
         run: |
           mkdir -p .work
-          tar -C dist -cf .work/static-dist.tar .
+          set -euo pipefail
+          find dist -mindepth 1 -maxdepth 1 -printf '%P\0' | LC_ALL=C sort -z | \
+            tar -C dist -cf .work/static-dist.tar --null -T -
 
       - name: Upload canonical static distribution
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

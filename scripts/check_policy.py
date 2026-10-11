@@ -806,6 +806,40 @@ def check_promotion_boundaries() -> None:
         'stable promotion must use the shared Pages publication action',
     )
 
+    aliases = jobs.get('oci-aliases')
+    require(aliases is not None, 'stable OCI alias publication job missing')
+    assert aliases is not None
+    require(
+        workflow_job_needs(aliases) == {'authorize', 'stable'},
+        'OCI aliases must depend on release authorization and stable promotion',
+    )
+    require(
+        workflow_job_environment(aliases) == 'release',
+        'OCI alias publication must use the protected release environment',
+    )
+    require(
+        publication_write_permissions(aliases) == {'packages'},
+        'OCI alias publisher must have only packages write access',
+    )
+    require(
+        "if: needs.stable.result == 'success'" in aliases,
+        'OCI alias publisher must skip unsuccessful stable promotions',
+    )
+    require(
+        'scripts/publish_oci_aliases.sh' in aliases,
+        'OCI alias publisher must reuse the verified release image',
+    )
+
+    status = jobs.get('promotion-status')
+    require(status is not None, 'promotion status job missing')
+    assert status is not None
+    require(
+        'oci-aliases' in workflow_job_needs(status)
+        and 'OCI_ALIASES_RESULT: ${{ needs.oci-aliases.result }}' in status
+        and status.count('[[ "$OCI_ALIASES_RESULT" == success ]]') == 2,
+        'stable promotion status must wait for successful OCI alias publication',
+    )
+
     for required in (
         'group: promotion-state',
         'release_tag:',

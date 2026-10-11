@@ -54,6 +54,8 @@ Use a tag from [Releases](https://github.com/Codellei/code-oss-static-web/releas
 docker run --rm -p 127.0.0.1:8080:8080 ghcr.io/codellei/code-oss-static-web:v1.141.0-web.1
 ```
 
+Moving GHCR aliases are also available after successful stable promotion and alias publication: `:latest` tracks the current promoted release, and `:1.141` tracks the most recent promotion in the VS Code 1.141 series (the same pattern applies to other major/minor versions). These aliases can change on promotion or rollback; use a full `:v1.141.0-web.2`-style release tag or digest when reproducibility matters. An older version-series alias remains at its last successful promotion when stable switches to another series. If alias publication fails, Pages can be stable while GHCR aliases remain on their previous digest.
+
 Open **http://127.0.0.1:8080/**. To use static hosting instead, download the release archive and serve the extracted files; see the [deployment guide](docs/ready-to-use.md). The release archive is flat: extraction produces `index.html` directly in the chosen directory, not inside a `dist/` subfolder.
 
 ## What works?

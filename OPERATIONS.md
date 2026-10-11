@@ -25,6 +25,8 @@ published checksums and GitHub attestations, and binds the promotion to:
 - release archive SHA-256;
 - promotion profile and SHA-256 of `config/promotion-policy.json`.
 
+The `oci-aliases` job runs only after the stable deployment has succeeded. Under the same `promotion-state` concurrency lock and protected `release` environment, it copies the already-published multi-platform GHCR index to the moving `:latest` and `:<upstream-major>.<upstream-minor>` tags. It never builds images or modifies immutable `:v*-web.*` tags, and checks the alias manifest digests against the immutable source. A stable rollback repoints `:latest` and the rolled-back release's version-series tag; tags for other version series remain unchanged. A failed alias update leaves the recorded stable Pages deployment intact, but fails the overall promotion workflow status so operators see the discrepancy. Alias publication is retryable by rerunning the same stable promotion; the two mutable pointers can briefly differ if a registry push fails partway through.
+
 Successful canary and stable promotions are recorded as GitHub Deployments. The latest successful
 deployment in each environment is the channel pointer; previous successful deployments are the audit
 history. GitHub additionally records the actor, workflow run, timestamps, and deployment statuses.

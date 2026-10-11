@@ -5,6 +5,7 @@ import io
 import json
 import subprocess
 import sys
+import tarfile
 import tempfile
 import unittest
 import zipfile
@@ -534,6 +535,39 @@ class ToolingTests(unittest.TestCase):
                 hashlib.sha256(a.read_bytes()).digest(),
                 hashlib.sha256(b.read_bytes()).digest(),
             )
+            with tarfile.open(a, 'r:gz') as archive:
+                self.assertEqual(archive.getnames(), ['a.txt', 'b/x.txt'])
+
+    def test_ci_distribution_archives_do_not_include_dot_root(self):
+        for workflow_name, archive_name in (
+            ('qualify.yml', 'static-dist'),
+            ('release.yml', 'release-static-dist'),
+            ('release.yml', 'release-rebuild-static-dist'),
+        ):
+            with self.subTest(workflow=workflow_name, archive=archive_name):
+                workflow = (ROOT / '.github/workflows' / workflow_name).read_text()
+                self.assertIn(
+                    "find dist -mindepth 1 -maxdepth 1 -printf '%P\\0' | LC_ALL=C sort -z |",
+                    workflow,
+                )
+                self.assertIn(
+                    f'tar -C dist -cf .work/{archive_name}.tar --null -T -',
+                    workflow,
+                )
+                self.assertNotIn(
+                    f'tar -C dist -cf .work/{archive_name}.tar .',
+                    workflow,
+                )
+
+    def test_ci_archive_steps_use_bash_for_pipefail(self):
+        for workflow_name, archive_kind in (
+            ('qualify.yml', 'canonical'),
+            ('release.yml', 'canonical'),
+            ('release.yml', 'independent'),
+        ):
+            workflow = (ROOT / '.github/workflows' / workflow_name).read_text()
+            step = f'      - name: Archive {archive_kind} static distribution'
+            self.assertIn(f'{step}\n        shell: bash\n        run: |', workflow)
 
     def test_distribution_comparison_detects_drift(self):
         import compare_dist
@@ -1435,9 +1469,9 @@ python-version: ${{ steps.versions.outputs.python }}
         release = (ROOT / '.github/workflows/release.yml').read_text()
         browser_action = (ROOT / '.github/actions/browser-qualification/action.yml').read_text()
 
-        self.assertIn('tar -C dist -cf .work/static-dist.tar .', qualification)
+        self.assertIn('tar -C dist -cf .work/static-dist.tar --null -T -', qualification)
         self.assertIn('path: .work/static-dist.tar', qualification)
-        self.assertIn('tar -C dist -cf .work/release-static-dist.tar .', release)
+        self.assertIn('tar -C dist -cf .work/release-static-dist.tar --null -T -', release)
         self.assertIn('path: .work/release-static-dist.tar', release)
         self.assertIn(
             'tar -C reference-dist -xf .work/release-static-dist/release-static-dist.tar',

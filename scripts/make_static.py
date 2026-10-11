@@ -83,8 +83,44 @@ function browserUri(relativePath) {
 const additionalBuiltinExtensions = additionalExtensionIndex.extensions
   .map(ext => browserUri(ext.path));
 
+// Persist only the workbench's folder/workspace descriptor in this tab.
+// Actual directory handles and permissions belong to Code-OSS and the browser.
+const WORKSPACE_KEY = 'cosw.workspace.v1';
+const isWorkspace = value => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  if (Boolean(value.folderUri) === Boolean(value.workspaceUri)) return false;
+  const uri = value.folderUri ?? value.workspaceUri;
+  return uri && typeof uri.scheme === 'string' &&
+    /^[a-z][a-z0-9+.-]*$/.test(uri.scheme) && typeof uri.path === 'string';
+};
+let initialWorkspace;
+try {
+  const value = sessionStorage.getItem(WORKSPACE_KEY);
+  if (value !== null) {
+    const parsed = JSON.parse(value);
+    if (isWorkspace(parsed)) initialWorkspace = parsed;
+    else sessionStorage.removeItem(WORKSPACE_KEY);
+  }
+} catch { /* unavailable storage: keep the empty workbench */ }
+
 const config = {
   enableWorkspaceTrust: true,
+  workspaceProvider: {
+    workspace: initialWorkspace,
+    trusted: undefined,
+    async open(workspace, options) {
+      // Unsupported new-window navigation must not replace or clear this tab.
+      if (options?.reuse !== true || (workspace && !isWorkspace(workspace))) return false;
+      try {
+        if (workspace) sessionStorage.setItem(WORKSPACE_KEY, JSON.stringify(workspace));
+        else sessionStorage.removeItem(WORKSPACE_KEY);
+        window.location.reload();
+        return true;
+      } catch {
+        return false;
+      }
+    }
+  },
   additionalBuiltinExtensions,
   configurationDefaults: {
     'workbench.startupEditor': 'none'

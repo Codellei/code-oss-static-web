@@ -734,7 +734,7 @@ jobs:
     needs: immutable-publication-status
     permissions:
       contents: read
-    uses: Codellei/cosw-demo/.github/workflows/notify-release.yml@10f090f712940ea6c8fdd97979bc70cedfafa6db
+    uses: Codellei/cosw-demo/.github/workflows/notify-release.yml@5b90be06e5144eca2b6891b891a4062d6d825214
     with:
       app-client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
     secrets:

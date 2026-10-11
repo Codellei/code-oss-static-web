@@ -4,6 +4,11 @@
     {
       "id": "copilot-cli-file-provider",
       "file": "copilot-cli-file-provider.patch"
+    },
+    {
+      "id": "serverless-local-folders",
+      "file": "serverless-local-folders.patch",
+      "purpose": "Expose native folder picker in the empty browser workbench"
     }
   ]
 }

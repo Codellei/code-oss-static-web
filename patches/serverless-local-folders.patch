@@ -1,0 +1,75 @@
+diff --git a/src/vs/workbench/browser/actions/workspaceActions.ts b/src/vs/workbench/browser/actions/workspaceActions.ts
+--- a/src/vs/workbench/browser/actions/workspaceActions.ts
++++ b/src/vs/workbench/browser/actions/workspaceActions.ts
+@@ -12,11 +12,11 @@
+ import { ADD_ROOT_FOLDER_COMMAND_ID, ADD_ROOT_FOLDER_LABEL, PICK_WORKSPACE_FOLDER_COMMAND_ID, SET_ROOT_FOLDER_COMMAND_ID } from './workspaceCommands.js';
+ import { IFileDialogService } from '../../../platform/dialogs/common/dialogs.js';
+ import { MenuRegistry, MenuId, Action2, registerAction2 } from '../../../platform/actions/common/actions.js';
+-import { EmptyWorkspaceSupportContext, EnterMultiRootWorkspaceSupportContext, IsSessionsWindowContext, OpenFolderWorkspaceSupportContext, WorkbenchStateContext, WorkspaceFolderCountContext } from '../../common/contextkeys.js';
++import { EmptyWorkspaceSupportContext, EnterMultiRootWorkspaceSupportContext, HasWebFileSystemAccess, IsSessionsWindowContext, OpenFolderWorkspaceSupportContext, WorkbenchStateContext, WorkspaceFolderCountContext } from '../../common/contextkeys.js';
+ import { ServicesAccessor } from '../../../platform/instantiation/common/instantiation.js';
+ import { IHostService } from '../../services/host/browser/host.js';
+ import { KeyChord, KeyCode, KeyMod } from '../../../base/common/keyCodes.js';
+-import { ContextKeyExpr } from '../../../platform/contextkey/common/contextkey.js';
++import { ContextKeyExpr, IContextKeyService } from '../../../platform/contextkey/common/contextkey.js';
+ import { IWorkbenchEnvironmentService } from '../../services/environment/common/environmentService.js';
+ import { IWorkspacesService } from '../../../platform/workspaces/common/workspaces.js';
+ import { KeybindingWeight } from '../../../platform/keybinding/common/keybindingsRegistry.js';
+@@ -61,7 +61,7 @@
+ 			title: localize2('openFolder', 'Open Folder...'),
+ 			category: Categories.File,
+ 			f1: true,
+-			precondition: OpenFolderWorkspaceSupportContext,
++			precondition: ContextKeyExpr.or(OpenFolderWorkspaceSupportContext, HasWebFileSystemAccess),
+ 			keybinding: {
+ 				weight: KeybindingWeight.WorkbenchContrib,
+ 				primary: undefined,
+@@ -76,6 +76,12 @@
+ 	}
+ 
+ 	override async run(accessor: ServicesAccessor, data?: ITelemetryData): Promise<void> {
++		if (accessor.get(IContextKeyService).contextMatchesRules(
++			ContextKeyExpr.and(OpenFolderWorkspaceSupportContext.toNegated(), HasWebFileSystemAccess)
++		)) {
++			return accessor.get(ICommandService).executeCommand(SET_ROOT_FOLDER_COMMAND_ID);
++		}
++
+ 		const fileDialogService = accessor.get(IFileDialogService);
+ 
+ 		return fileDialogService.pickFolderAndOpen({ forceNewWindow: false, telemetryExtraData: data });
+@@ -97,7 +103,7 @@
+ 			title: localize2('openFolder', 'Open Folder...'),
+ 			category: Categories.File,
+ 			f1: true,
+-			precondition: ContextKeyExpr.and(OpenFolderWorkspaceSupportContext.toNegated(), WorkbenchStateContext.isEqualTo('workspace')),
++			precondition: ContextKeyExpr.and(OpenFolderWorkspaceSupportContext.toNegated(), ContextKeyExpr.or(WorkbenchStateContext.isEqualTo('workspace'), HasWebFileSystemAccess)),
+ 			keybinding: {
+ 				weight: KeybindingWeight.WorkbenchContrib,
+ 				primary: KeyMod.CtrlCmd | KeyCode.KeyO
+@@ -363,7 +369,7 @@
+ 		title: localize({ key: 'miOpenFolder', comment: ['&& denotes a mnemonic'] }, "Open &&Folder...")
+ 	},
+ 	order: 2,
+-	when: ContextKeyExpr.and(OpenFolderWorkspaceSupportContext.toNegated(), WorkbenchStateContext.isEqualTo('workspace'))
++	when: ContextKeyExpr.and(OpenFolderWorkspaceSupportContext.toNegated(), ContextKeyExpr.or(WorkbenchStateContext.isEqualTo('workspace'), HasWebFileSystemAccess))
+ });
+ 
+ MenuRegistry.appendMenuItem(MenuId.MenubarFileMenu, {
+diff --git a/src/vs/workbench/browser/web.main.ts b/src/vs/workbench/browser/web.main.ts
+--- a/src/vs/workbench/browser/web.main.ts
++++ b/src/vs/workbench/browser/web.main.ts
+@@ -668,12 +668,12 @@
+ 
+ 		// Multi-root workspace
+ 		if (workspace && isWorkspaceToOpen(workspace)) {
+-			return getWorkspaceIdentifier(workspace.workspaceUri);
++			return getWorkspaceIdentifier(URI.revive(workspace.workspaceUri));
+ 		}
+ 
+ 		// Single-folder workspace
+ 		if (workspace && isFolderToOpen(workspace)) {
+-			return getSingleFolderWorkspaceIdentifier(workspace.folderUri);
++			return getSingleFolderWorkspaceIdentifier(URI.revive(workspace.folderUri));
+ 		}
+ 
+ 		// Empty window workspace

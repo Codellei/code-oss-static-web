@@ -1,11 +1,25 @@
-# Ready-to-use Code OSS Static Web
+# Ready-to-use (`company-standard`)
 
-The release ships **one attested `.tar.gz` distribution**. No release-specific
-extension or proposed-API exception is built in. The default tracked
-`company-standard` profile now supplies an **Open VSX-enabled** extension
-gallery through reviewed registry/CDN origins; `baseline-static` is a gallery-free,
-self-only alternative. Neither profile supports offline operation.
-Both profiles disable Code OSS host telemetry and webviews.
+**Ready-to-use** is the variant published through GitHub Releases and Docker
+and promoted to the GitHub Pages demo. It uses the `company-standard` build
+profile with an **Open VSX-enabled** extension gallery and reviewed registry/CDN
+network origins. The release currently contains no extra third-party extensions
+or proposed-API grants.
+
+For a minimal, gallery-free build with a self-only network policy, see
+[Clean (`baseline-static`)](clean.md). Clean is **not currently published as a
+separate release**: switching profiles requires a new build and qualification,
+not a Docker environment variable or an edit to the distributed files.
+
+Neither profile supports offline operation; both disable Code OSS host telemetry
+and webviews.
+
+## Try the demo
+
+GitHub Pages stable promotion serves the **same qualified Ready-to-use archive**
+as the release and Docker image. Find the live site link (when deployed) in
+[GitHub Pages deployments](https://github.com/Codellei/code-oss-static-web/deployments/github-pages).
+The demo is **not** the Clean profile.
 
 ## Run the published Docker image
 
@@ -20,19 +34,27 @@ verify the CSP/COEP/CORS path, and record browser/deployment qualification.
 For site paths other than `/`, configure the reverse proxy and preserve
 relative asset locations.
 
-## Use the clean archive
+## Host the Ready-to-use release archive
 
 ```sh
 mkdir -p site
 tar -xzf code-oss-static-web-<version>.tar.gz -C site
 ```
 
-Serve the files as static assets with correct MIME types, not with a VS Code
-server process. To rebuild a strictly self-only archive, select
-`baseline-static` in `config/deployment.json` and run `./build.sh`,
-the full browser qualification, then `./package.sh`.
+The published `.tar.gz` uses **flat website-root paths** with no enclosing `dist/` folder or `./` root entry. After extraction, the entry point is `site/index.html` and the bootstrap is `site/static-bootstrap.mjs`. The internal CI distribution tarballs now use the same extraction-root layout; that CI change did not alter existing public release archives.
+
+Download the archive from [Releases](https://github.com/Codellei/code-oss-static-web/releases/latest)
+and substitute its version in the command. Serve the files as static assets with
+correct MIME types, not with a VS Code server process. This published archive
+is **Ready-to-use**, not Clean. To build the gallery-free variant, follow the
+[Clean build guide](clean.md).
+
 Editing an attested archive in place creates a **different, unsupported
 artifact**; its released checksums and signature no longer describe the bytes.
+
+## Customize this release
+
+The published archive is immutable and attested, but you may use its verified bytes as the **base for a separate customized derivative** (gallery, specific API origins, additional browser extensions, default theme, or scoped proposed-API grants). The resulting archive has its own identity and is not covered by the original release's attestation. See [which release files can be changed](artifact-customization.md) and the [proposed browser customizer contract](customizer-contract.md).
 
 ## Open a local folder (Chromium)
 

@@ -34,6 +34,20 @@ the full browser qualification, then `./package.sh`.
 Editing an attested archive in place creates a **different, unsupported
 artifact**; its released checksums and signature no longer describe the bytes.
 
+## Open a local folder (Chromium)
+
+In Chrome or Edge on a secure origin, choose **File: Open Folder...**
+from the command palette or File menu, then grant directory access in the
+browser picker. Code-OSS handles file reads/writes with its built-in
+`HTMLFileSystemProvider`; COSW does not copy files onto a server or implement
+a second filesystem.
+
+The chosen workspace is restored across same-tab reloads using tab session
+storage. Directory handles and permissions remain browser-managed. Access
+may need to be granted again, and clearing site data can discard saved handles.
+This feature does not provide local Git commands or terminals, and browser
+engines without File System Access are not supported for local folders.
+
 ## Marketplace
 
 `company-standard` configures the Open VSX extension gallery using the

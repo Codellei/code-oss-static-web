@@ -1,140 +1,85 @@
 # Code OSS Static Web
 
-[![CI](https://github.com/Codellei/code-oss-static-web/actions/workflows/ci.yml/badge.svg)](https://github.com/Codellei/code-oss-static-web/actions/workflows/ci.yml)
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/Codellei/code-oss-static-web/badge)](https://scorecard.dev/viewer/?uri=github.com/Codellei/code-oss-static-web)
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15349/badge)](https://www.bestpractices.dev/projects/15349)
-[![REUSE status](https://api.reuse.software/badge/github.com/Codellei/code-oss-static-web)](https://api.reuse.software/info/github.com/Codellei/code-oss-static-web)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/Codellei/code-oss-static-web/actions/workflows/ci.yml/badge.svg)](https://github.com/Codellei/code-oss-static-web/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Independent tooling for producing a **zero-backend static browser build** from an immutable
-MIT-licensed Code - OSS revision without maintaining a fork of Microsoft's repository.
+**A self-hosted Code OSS editor for your browser. No application backend required.**
 
-## Implemented now
+Run a familiar code editor from static files, on your own host, or with Docker.
 
-- exact upstream tag + 40-character commit lock;
-- disposable source fetch by commit, not a maintained fork;
-- deterministic `product.json` transform;
-- explicit patch manifest for narrowly scoped upstream compatibility fixes;
-- upstream `vscode-web-min` build orchestration;
-- static `index.html` + runtime bootstrap generation through the upstream web embedder API;
-- browser-compatible built-in extension indexing;
-- telemetry disabled in the project runtime;
-- fail-closed webview mode on generic static hosting;
-- profile-scoped `connect-src` CSP (self-only baseline; reviewed Open VSX origins in company profile);
-- deterministic `.tar.gz` packaging and SHA-256 verification;
-- Playwright qualification for static boot, editing, commands, settings, workspace trust, network policy and extension host;
-- browser-extension activation plus global-state/filesystem persistence and language-service qualification;
-- split build/browser/package/attest jobs using the same canonical `dist/`;
-- content-addressed cache for the immutable upstream Code-OSS web bundle;
-- exported minimal Playwright runtime for fast browser-only reruns and local debugging;
-- deterministic artifact manifest and CycloneDX 1.7 SBOM;
-- deterministic license inventory covering every SBOM component;
-- isolated GitHub/Sigstore provenance and SBOM attestations;
-- reproducibility-gated GitHub Release, Pages and GHCR publication workflows.
+## Choose your version
 
-## Release outputs
+### Clean: Start with the essentials
 
-Microsoft Code - OSS updates publish automatically as `web.0`. Project-side fixes can be
-published deliberately as monotonic `web.1`, `web.2`, and later patch revisions for the same
-Microsoft version.
+Code OSS with the compatibility patches needed to run as a static website.
 
-New immutable `v*-web.*` releases publish the same qualified static distribution as:
+- No extension marketplace or bundled third-party extensions.
+- Self-only network policy; host telemetry and webviews disabled.
+- A minimal base for custom browser-editor deployments.
 
-- deterministic `.tar.gz` distribution on the GitHub Release;
-- a GitHub Pages deployment;
-- an OCI image at `ghcr.io/codellei/code-oss-static-web:<tag>` for
-  `linux/amd64` and `linux/arm64`.
+**[Build Clean from source](docs/clean.md)**
 
-Releases published before the organization transfer retain their original
-`ghcr.io/hrashton/code-oss-static-web:<tag>` images and signed provenance.
+### Ready-to-use: Open and start editing
 
-Iframe embedding is a hosting decision: the shipped application and OCI image are neutral by
-default. Operators can restrict embedding with an HTTP `frame-ancestors` header on the Code
-OSS response at their public serving edge. See [static hosting and CSP](COMPATIBILITY.md#static-hosting-and-csp).
+The same Code OSS foundation, preconfigured with the **Open VSX** extension gallery.
 
-Release archives include checksums, an artifact manifest, CycloneDX SBOM, component-level license
-inventory, upstream metadata, licenses, notices, and GitHub/Sigstore attestations.
+- Browse and install compatible browser extensions (not every extension works).
+- Open local folders in supported Chromium browsers.
+- Deploy the published static archive or Docker image.
 
-## Deployment profiles
+**[Download Ready-to-use](https://github.com/Codellei/code-oss-static-web/releases/latest)** · **[Find the GitHub Pages demo](https://github.com/Codellei/code-oss-static-web/deployments/github-pages)**
 
-Build policy is selected by the tracked `config/deployment.json` file and resolved through
-schema-validated profiles in `config/profiles/`. The default selection is `company-standard`.
+> **Current availability:** Releases, the Docker image, and GitHub Pages promotion use the Ready-to-use (`company-standard`) profile. Clean (`baseline-static`) is buildable from source but is **not yet a separately published release**. The Pages demo is the Ready-to-use build, not Clean.
 
-| Profile | Proposed API grants | Purpose |
+## Build profiles
+
+Source builds select a profile through `config/deployment.json`:
+
+| Profile | Proposed API grants | Default network and gallery |
 | --- | --- | --- |
-| `company-standard` | None | Open VSX-enabled profile with reviewed CSP/network origins; telemetry disabled. |
-| `baseline-static` | None | Exception-free secure baseline. |
+| `baseline-static` | None | Self-only; no extension gallery |
+| `company-standard` | None | Self and approved Open VSX origins; Open VSX gallery |
 
-Both profiles disable host telemetry and webviews. `baseline-static` remains
-strictly self-only and gallery-free, while `company-standard` configures the
-Open VSX gallery and admits only its documented registry/CDN origins.
-No third-party extensions are bundled by default; required additions must be
-approved, version-locked and distributed by an immutable extension mirror.
-See [ready-to-use deployments](docs/ready-to-use.md) for Docker, Pages and
-extension installation.
+Both official profiles disable proposed-API grants. Experimental per-extension grants apply only to separately customized derivatives or reviewed source-build profiles, not the official release.
+## Customize an archive
 
-Each profile binds runtime, network, product, proposed-API, webview, branding, support, extension
-lock, extension license, and extension source policy documents. Builds write
-`dist/deployment-profile.json` containing the selected profile ID, a digest over the resolved
-configuration closure, and the SHA-256 of every bound input. Release artifact metadata records the
-same identity and digest.
+A release archive is a static website. You can make a **new, unofficial derivative** by adjusting the gallery, CSP origins, default theme, and bundled browser extensions without necessarily recompiling Code OSS. Scoped **proposed-API grants** (for a compatible experimental Remotish history host) are possible too; the published Remotish extension itself uses stable APIs only.
 
-Only policy modes implemented and qualified by this repository are schema-valid. New deployment
-modes such as isolated webviews must add their implementation, validation, and qualification before
-they can be enabled by a profile.
+Read [the artifact file guide](docs/artifact-customization.md) to see what every key file does and what can safely change. The [customizer contract](docs/customizer-contract.md) specifies a future browser-based GitHub Pages configurator and CLI. **Neither tool is implemented yet.**
 
-## Build
+## Run Ready-to-use locally
 
-```bash
-./build.sh
-python3 scripts/smoke_static.py dist
-python3 scripts/serve_static.py --directory dist --base-path /code-oss-web/ --port 8080
+Use a tag from [Releases](https://github.com/Codellei/code-oss-static-web/releases/latest). For example:
+
+```sh
+docker run --rm -p 127.0.0.1:8080:8080 ghcr.io/codellei/code-oss-static-web:v1.141.0-web.1
 ```
 
-Package the exact `dist/`:
+Open **http://127.0.0.1:8080/**. To use static hosting instead, download the release archive and serve the extracted files; see the [deployment guide](docs/ready-to-use.md). The release archive is flat: extraction produces `index.html` directly in the chosen directory, not inside a `dist/` subfolder.
 
-```bash
-./package.sh
-```
+## What works?
 
-After the full Code-OSS build, browser qualification can be run with:
+- **Editing:** Code OSS editor, commands, settings, and browser-compatible language features.
+- **Local folders:** In Chrome or Edge on a secure origin, use **File: Open Folder...** and grant browser access. Files stay on your computer; permissions are browser-managed.
+- **Extensions:** Ready-to-use connects to Open VSX. No extra third-party extensions are bundled by default; gallery availability does not guarantee compatibility.
+- **Self-hosting:** Publish the static files or run the Nginx-based container; no Code OSS server is needed.
 
-```bash
-python3 scripts/install_playwright_browser.py --with-deps chromium
-python3 scripts/run_e2e.py --project chromium --dist dist --grep-invert @extension
-```
+## Important limits
 
-See `docs/testing.md` for the extension-host qualification path and browser policy.
+- No integrated terminal or local Git commands.
+- No offline mode; webviews are disabled.
+- Local folder access requires a browser with File System Access support.
+- Host telemetry is disabled, but third-party extensions can make their own network requests.
 
-## Important current limitation
+Read [Compatibility](COMPATIBILITY.md) for supported browser/deployment boundaries.
 
-Secure webviews are intentionally not enabled. Code - OSS normally relies on an isolated webview
-origin/subdomain. Until a secure deployment-independent design is qualified, webview content is
-configured to fail closed.
+## Documentation
 
-## Project links
+- [Clean build](docs/clean.md) · [Ready-to-use deployment](docs/ready-to-use.md) · [Customize an archive](docs/artifact-customization.md)
+- [Contributing](CONTRIBUTING.md) · [Testing](docs/testing.md) · [Release security](docs/release-security.md)
+- [Support](SUPPORT.md) · [Report an issue](https://github.com/Codellei/code-oss-static-web/issues) · [Security reports](SECURITY.md)
 
-- [Releases](https://github.com/Codellei/code-oss-static-web/releases) - immutable qualified release artifacts.
-- [Issues](https://github.com/Codellei/code-oss-static-web/issues) - bugs and enhancement requests.
-- [Contributing](CONTRIBUTING.md) - contribution process, review requirements, and local checks.
-- [Governance](GOVERNANCE.md) - ownership, sensitive-path review, migration, and continuity plan.
-- [Security](SECURITY.md) - private vulnerability reporting and supported-version policy.
-- [Release security](docs/release-security.md) - provenance, SBOM, attestation, and publication boundaries.
-- [Compatibility](COMPATIBILITY.md) - supported browser/deployment contract and qualification boundary.
-- [Operations](OPERATIONS.md) - release publication recovery and partial-failure procedures.
+## Upstream and license
 
-## Upstream
+This project builds from pinned upstream Code - OSS, without maintaining a Microsoft repository fork. It is not Microsoft's Visual Studio Code distribution and is not endorsed by Microsoft.
 
-The exact Code - OSS tag and commit are pinned in `upstream.lock.json`. The tag is resolved
-independently (including peeling annotated tags) and must identify the exact pinned commit before a
-build can start; the fetched checkout is then separately verified to have that exact `HEAD`.
-A changed upstream revision is published only after the automated full-browser qualification
-succeeds.
-
-This project is not Microsoft's Visual Studio Code distribution and is not endorsed by Microsoft.
-
-## License
-
-Original project tooling is MIT licensed. Generated artifacts contain Code - OSS and third-party
-components under their respective licenses. Release artifacts include the upstream license and
-notices, a component-level license inventory, and a CycloneDX SBOM.
+Original project tooling is [MIT licensed](LICENSE). Code OSS and third-party components retain their respective licenses; release artifacts include licenses, notices, and an SBOM.

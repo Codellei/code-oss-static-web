@@ -961,9 +961,42 @@ jobs:
           )"
           gh api --method POST             "repos/$GITHUB_REPOSITORY/deployments/$DEPLOYMENT_ID/statuses"             --input - <<<"$status" >/dev/null
 
+  oci-aliases:
+    name: Update stable GHCR aliases
+    needs: [authorize, stable]
+    if: needs.stable.result == 'success'
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+        with:
+          driver-opts: |
+            image=moby/buildkit@sha256:28a898719c18a33f4e8000685287fa36fd0dd9560c6440227d3a732d79bb41d8
+
+      - name: Copy verified stable index to rolling aliases
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        shell: bash
+        run: bash scripts/publish_oci_aliases.sh ghcr.io/codellei/code-oss-static-web "$RELEASE_TAG"
+
   promotion-status:
     if: always()
-    needs: [authorize, canary, pages-release-gate, stable]
+    needs: [authorize, canary, pages-release-gate, stable, oci-aliases]
     runs-on: ubuntu-latest
     permissions: {}
     steps:
@@ -974,6 +1007,7 @@ jobs:
           CANARY_RESULT: ${{ needs.canary.result }}
           PAGES_GATE_RESULT: ${{ needs.pages-release-gate.result }}
           STABLE_RESULT: ${{ needs.stable.result }}
+          OCI_ALIASES_RESULT: ${{ needs.oci-aliases.result }}
         shell: bash
         run: |
           set -euo pipefail
@@ -983,6 +1017,7 @@ jobs:
               [[ "$CANARY_RESULT" == success ]]
               [[ "$PAGES_GATE_RESULT" == success ]]
               [[ "$STABLE_RESULT" == success ]]
+              [[ "$OCI_ALIASES_RESULT" == success ]]
               ;;
             canary)
               [[ "$PAGES_GATE_RESULT" == success ]]
@@ -991,6 +1026,7 @@ jobs:
             stable)
               [[ "$PAGES_GATE_RESULT" == success ]]
               [[ "$STABLE_RESULT" == success ]]
+              [[ "$OCI_ALIASES_RESULT" == success ]]
               ;;
             *)
               echo "unsupported promotion target: $TARGET" >&2

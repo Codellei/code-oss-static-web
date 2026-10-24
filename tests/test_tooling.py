@@ -323,7 +323,7 @@ class ToolingTests(unittest.TestCase):
         self.assertIn('-f browser=all', weekly)
         self.assertIn('-f release_mode="$RELEASE_MODE"', weekly)
         self.assertIn('-f expected_source_sha="$SOURCE_SHA"', weekly)
-        self.assertIn("master_sha=\"$(gh api", weekly)
+        self.assertIn('master_sha="$(gh api', weekly)
         self.assertIn('upstream.lock.json?ref=$master_sha', weekly)
         self.assertIn('found_zero', weekly)
         self.assertIn('release_mode=upstream', weekly)

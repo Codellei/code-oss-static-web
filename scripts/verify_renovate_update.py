@@ -42,7 +42,10 @@ def verify(
     expected_upstream_epoch: int,
     now: datetime | None = None,
 ) -> None:
-    require(changed == set(EXPECTED_PATHS), f'unexpected Renovate paths: {sorted(changed)}')
+    require(
+        changed in ({'upstream.lock.json'}, set(EXPECTED_PATHS)),
+        f'unexpected Renovate paths: {sorted(changed)}',
+    )
 
     def checked(path: str) -> tuple[str, str]:
         return (
@@ -95,6 +98,9 @@ def verify(
         'upstream sourceDateEpoch',
     )
     require(after_upstream == expected_upstream, 'unapproved upstream lock changes')
+
+    if 'builder-apt-snapshot.json' not in changed:
+        return
 
     before_builder, after_builder = checked('builder-apt-snapshot.json')
     previous_builder = json.loads(before_builder)
@@ -149,7 +155,7 @@ def main(argv: list[str]) -> int:
     except (ValueError, OSError, KeyError, TypeError, json.JSONDecodeError) as exc:
         print(f'Renovate approval denied: {exc}', file=sys.stderr)
         return 1
-    print('Renovate upstream and APT snapshot update matches the approved transform')
+    print('Renovate upstream update and any snapshot change match the approved transform')
     return 0
 
 

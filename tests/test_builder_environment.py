@@ -48,6 +48,15 @@ class BuilderEnvironmentTests(unittest.TestCase):
                 builder_environment.load_builder(path)['aptSnapshot'], '20261005T000000Z'
             )
 
+    def test_repo_builder_uses_official_digest_pinned_docker_hub_image(self) -> None:
+        builder = builder_environment.load_builder(ROOT / 'builder-image.json')
+        self.assertEqual(builder['image'], 'docker.io/library/ubuntu')
+        self.assertEqual(
+            builder_environment.image_reference(builder),
+            'docker.io/library/ubuntu@' + builder['digest'],
+        )
+        self.assertTrue(builder['digest'].startswith('sha256:'))
+
     def test_builder_manifest_rejects_mutable_or_malformed_identity(self) -> None:
         identity = {
             'schemaVersion': 3,

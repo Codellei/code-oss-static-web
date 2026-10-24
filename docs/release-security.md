@@ -184,10 +184,19 @@ artifact's builder identity and independently checked before release authorizati
 its input digest. Cache keys include both locks, so snapshot rotation triggers full qualification.
 
 The release builder image and the unprivileged NGINX OCI serving base are both pinned by
-SHA-256 and pulled from upstream-published Amazon ECR Public registries. Using ECR avoids Docker
-Hub anonymous pull limits without permitting mutable-tag resolution. Both independent release
-builds use the same locked Ubuntu image and APT snapshot; OCI serving qualification pulls the
+SHA-256 and pulled from their official Docker Hub repositories on GitHub-hosted runners.
+GitHub documents that GitHub-hosted runners are exempt from Docker Hub's normal pull-rate
+limits; the previous ECR Public mirror returned `toomanyrequests: Data limit exceeded`
+before qualification containers could start. This registry-only change preserves both
+existing image digests and does not use mutable tags. Both independent release builds still
+use the same locked Ubuntu image and APT snapshot; OCI serving qualification uses the
 pinned NGINX image.
+
+This relies on standard GitHub-hosted runners; self-hosted runners may still encounter
+Docker Hub pull limits and would need a reviewed authenticated registry or a digest-preserving
+mirror. If a registry cannot supply a pinned image, qualification fails closed and must be
+re-run after registry access is restored. Never bypass the artifact gate or change an image
+digest merely to make a pull succeed.
 
 The digest-pinned minimal Ubuntu image initially lacks CA certificates. To authenticate the HTTPS
 snapshot endpoint without installing mutable packages, the build jobs mount the GitHub-hosted

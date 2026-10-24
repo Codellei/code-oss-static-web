@@ -209,12 +209,13 @@ at least two years, not indefinitely; very old historical
 rebuilds may eventually fail closed if the snapshot disappears. A separately digest-pinned
 builder OCI image with preinstalled prerequisites remains the archival alternative.
 
-Renovate couples the snapshot refresh to the VS Code release. Its custom datasource
-uses the GitHub release publication timestamp minus 48 hours, rounded down to UTC
-midnight; the `minimumGroupSize: 3` grouped update requires the upstream tag/commit,
-its derived source date epoch, and the snapshot-only root lock. The trusted
+Renovate proposes updates on Mondays and groups compatible platform updates when present.
+Its snapshot datasource uses the GitHub release publication timestamp minus 48 hours,
+rounded down to UTC midnight. There is no minimum group size: a standalone VS Code
+version update can be proposed with its source date epoch even if no APT snapshot update
+is available. The trusted
 approval guard compares the actual base and PR-head bytes and permits only the
-expected tag, commit, source date epoch, and snapshot replacements. No workflow code
+expected tag, commit, source date epoch, and optional snapshot replacement. No workflow code
 or CODEOWNED path is edited in routine Renovate PRs; qualification and release jobs read the
 source-bound timestamp from trusted planner/authorizer outputs. Full qualification must pass.
 A failed candidate leaves the previously qualified builder inputs and immutable release unchanged.

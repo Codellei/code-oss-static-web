@@ -21,15 +21,16 @@ Changes involving webviews, CSP, sandboxing, workspace trust, extension loading,
 URI handlers, provenance, release publication, or other trust boundaries require explicit manual
 review. Automated approvals cannot satisfy that requirement.
 
-The trusted Renovate auto-approval workflow is a narrow exception for grouped platform-update
-dependency pull requests. The exact trusted Renovate auto-approval allowlist is:
+The trusted Renovate auto-approval workflow is a narrow exception for valid upstream-lock
+dependency pull requests, whether or not a snapshot update is also available. The exact trusted Renovate auto-approval allowlist is:
 
 - `upstream.lock.json`
 - `builder-apt-snapshot.json`
 
-Both files must change together, with no additional paths. Approval waits for successful
-pull-request `Full build qualification` (not the push-only `CI` workflow) and validation
-of the upstream version/commit/source-date epoch and APT snapshot transformations.
+An upstream-lock update can stand alone or include the APT snapshot; no other paths are
+allowed. Approval waits for successful pull-request `Full build qualification` (not the
+push-only `CI` workflow), validation of the upstream version/commit/source-date epoch,
+and validation of the APT snapshot when present. Snapshot-only updates require human review.
 Changes under `.github/**`, `deploy/**`, `builder-image.json`, or any other release/security
 trust boundary are outside that allowlist and require human approval.
 
@@ -42,9 +43,9 @@ Repository ownership and sensitive-path review expectations are defined in
 requires the other maintainer to approve sensitive-path changes. Distinct organization roles remain
 a documented future control until qualified team members and team-backed rules are available.
 
-`upstream.lock.json` and `builder-apt-snapshot.json` are intentionally outside CODEOWNERS,
-allowing only the validated two-file platform update to merge without human review. A change to
-either file alone is not auto-approved. The immutable image/digest/platform fields in
+`upstream.lock.json` and `builder-apt-snapshot.json` are intentionally outside CODEOWNERS.
+Only an upstream-lock update, alone or paired with the validated snapshot, can receive
+trusted automatic approval. A snapshot-only update is not auto-approved. The immutable image/digest/platform fields in
 `builder-image.json` are CODEOWNED, alongside workflows, release policy, deployment, security,
 and other trust boundaries.
 

@@ -101,11 +101,11 @@ may eventually fail closed for an older release without an archived builder imag
 
 ### Renovate-managed builder snapshot rotation
 
-The same Renovate PR that updates the pinned VS Code release also updates the Ubuntu
-APT snapshot timestamp. Renovate's custom datasource derives the candidate from VS
+Renovate prefers to group an upstream VS Code update with an available Ubuntu
+APT snapshot update, but neither update waits for the other to become available. Renovate's custom datasource derives the candidate from VS
 Code's published GitHub release time, minus 48 hours and rounded down to midnight
-UTC. The `minimumGroupSize: 3` requirement groups the upstream tag/commit, source date
-epoch, and snapshot-only lock updates. The qualification planner and release authorizer
+UTC. There is no minimum group size: Renovate opens eligible Monday updates even when
+only the VS Code release has changed. The qualification planner and release authorizer
 resolve the pinned timestamp from this lock at the exact source commit; container jobs
 consume those immutable job outputs rather than duplicating the timestamp in YAML.
 
@@ -115,12 +115,12 @@ and builder snapshot. The pinned epoch must equal the pinned commit's UTC commit
 timestamp; when changing the pin manually, derive it with
 `git show -s --format=%ct <commit>` in the fetched upstream checkout.
 
-The trusted auto-approval job accepts only the exact two-file diff: an advancing
-VS Code tag, commit, and source date epoch plus a timestamp-only snapshot lock change.
+The trusted auto-approval job accepts an upstream-lock update with an advancing VS Code
+tag, commit and source date epoch, optionally with a timestamp-only snapshot lock change.
 It independently obtains the commit timestamp from GitHub's Git commit API and rejects
 stale, regressed, or mismatching epochs.
-It downloads both revisions from GitHub and executes the guard from trusted
-master, never the PR branch. Full qualification must succeed before automated
+It downloads the changed lock revisions from GitHub and executes the guard from trusted
+master, never the PR branch. A snapshot-only PR is not auto-approved. Full qualification must succeed before automated
 approval and merge. All other changes fail closed. The snapshot lock is a narrowly
 scoped, non-CODEOWNED data input like the upstream lock; the image identity and workflows
 are CODEOWNED. If the release has no publication timestamp, the group is not generated.

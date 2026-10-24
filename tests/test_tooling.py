@@ -205,7 +205,11 @@ class ToolingTests(unittest.TestCase):
         )
         self.assertIn('verify_renovate_update.py', workflow)
         self.assertIn('ref: master', workflow)
-        self.assertEqual(config['packageRules'][0]['minimumGroupSize'], 3)
+        self.assertNotIn('minimumGroupSize', config['packageRules'][0])
+        self.assertEqual(config['timezone'], 'UTC')
+        self.assertEqual(config['schedule'], ['* 0-5 * * 1'])
+        self.assertFalse(config['updateNotScheduled'])
+        self.assertNotIn('schedule', config['packageRules'][1])
         self.assertEqual(config['packageRules'][0]['groupSlug'], 'code-oss-platform')
         self.assertEqual(
             config['customDatasources']['ubuntu-snapshot']['defaultRegistryUrlTemplate'],

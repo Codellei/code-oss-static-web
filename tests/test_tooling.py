@@ -328,7 +328,7 @@ class ToolingTests(unittest.TestCase):
         self.assertIn('found_zero', weekly)
         self.assertIn('release_mode=upstream', weekly)
         self.assertIn('release_mode=patch', weekly)
-        self.assertIn('if: steps.release.outputs.dispatch == \'true\'', weekly)
+        self.assertIn("if: steps.release.outputs.dispatch == 'true'", weekly)
         self.assertIn('No changes since published', weekly)
         self.assertIn('gh api "repos/$GITHUB_REPOSITORY/releases/tags/$latest_tag"', weekly)
         self.assertIn('  workflow_dispatch:', manual_upstream)

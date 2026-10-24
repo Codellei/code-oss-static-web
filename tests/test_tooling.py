@@ -408,7 +408,7 @@ class ToolingTests(unittest.TestCase):
         self.assertIn('target_tag="$latest_tag"', patch)
         self.assertNotIn('already points to current master', patch)
         self.assertIn('-f browser=all', patch)
-        self.assertIn('-f release_mode=patch', patch)
+        self.assertIn('-f release_mode="$RELEASE_MODE"', patch)
         self.assertIn('contents/upstream.lock.json?ref=$master_sha', patch)
         self.assertIn('SOURCE_SHA: ${{ steps.release.outputs.source_sha }}', patch)
         self.assertIn('-f expected_source_sha="$SOURCE_SHA"', patch)

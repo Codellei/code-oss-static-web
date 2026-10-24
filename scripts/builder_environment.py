@@ -33,8 +33,8 @@ def load_builder(path: Path) -> dict[str, str]:
     platform = data.get('platform')
     snapshot = snapshot_data.get('aptSnapshot')
     require(
-        isinstance(image, str) and bool(image) and '@' not in image,
-        'builder image name invalid',
+        image == 'docker.io/library/ubuntu',
+        'builder image must use the official Docker Hub Ubuntu repository',
     )
     require(
         isinstance(digest, str) and DIGEST_RE.fullmatch(digest) is not None,

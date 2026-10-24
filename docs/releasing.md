@@ -61,11 +61,8 @@ full qualification pipeline as Thursday. To expedite a project patch, manually r
 **Patch release**. Manual patch runs retain their recovery behavior.
 
 After build, Chromium/Firefox/WebKit qualification, packaging and qualification attestations all
-succeed, the workflow creates exactly:
-
-```text
-v<code-oss-version>-web.0
-```
+succeed, the workflow creates the selected immutable release tag: `web.0` for a newly pinned
+Microsoft upstream version, or the next `web.N` for an already-published version.
 
 The terminal release-intent gate rejects a successful workflow when tooling, planning, build,
 browser, OCI serving, packaging, attestation, or release dispatch was skipped or failed.

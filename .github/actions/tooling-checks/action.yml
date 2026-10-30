@@ -62,7 +62,7 @@ runs:
       run: python3 scripts/check_commit_message.py "$COMMIT_MESSAGE"
 
     - name: REUSE compliance
-      uses: docker://fsfe/reuse:6.2.0@sha256:85462a75c0f8efda09ddd190b92816b70e7662577c8427429e11e1b9f25a992e
+      uses: docker://fsfe/reuse:6.3.0@sha256:2748d04c2adeb747c9a44831bc99a9cbfd7bf7ff6fc371a4b63204944e3e47b6
       with:
         args: lint
 
@@ -97,13 +97,13 @@ runs:
     - name: Ruff lint
       uses: astral-sh/ruff-action@278981a28ce3188b1e39527901f38254bf3aac89 # v4.1.0
       with:
-        version: '0.16.10'
+        version: '0.17.3'
         args: 'check'
 
     - name: Ruff format check
       uses: astral-sh/ruff-action@278981a28ce3188b1e39527901f38254bf3aac89 # v4.1.0
       with:
-        version: '0.16.10'
+        version: '0.17.3'
         args: 'format --check'
 
     - name: Pyright

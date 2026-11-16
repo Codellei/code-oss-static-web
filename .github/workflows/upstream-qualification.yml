@@ -1,10 +1,8 @@
 name: Upstream qualification trigger
 
+# Manual recovery/expedite path. Routine releases use Thursday's Patch release scheduler.
 on:
-  push:
-    branches: [master]
-    paths:
-      - upstream.lock.json
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -16,39 +14,33 @@ jobs:
       actions: write
       contents: read
     steps:
-      - name: Detect upstream revision change
+      - name: Resolve current protected upstream revision
         id: upstream
         env:
           GH_TOKEN: ${{ github.token }}
-          BEFORE_SHA: ${{ github.event.before }}
         shell: bash
         run: |
           set -euo pipefail
           default_branch="$(gh api "repos/$GITHUB_REPOSITORY" --jq '.default_branch')"
-          current_sha="$(
-            gh api "repos/$GITHUB_REPOSITORY/commits/$default_branch" --jq '.sha'
+          [[ "$default_branch" == master ]] || {
+            echo 'Upstream release requires master as the protected default branch.' >&2
+            exit 1
+          }
+          current_sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/$default_branch" --jq '.sha')"
+          lock="$(
+            gh api -H 'Accept: application/vnd.github.raw+json' \
+              "repos/$GITHUB_REPOSITORY/contents/upstream.lock.json?ref=$current_sha"
           )"
-          old_lock="$(
-            gh api -H 'Accept: application/vnd.github.raw+json'               "repos/$GITHUB_REPOSITORY/contents/upstream.lock.json?ref=$BEFORE_SHA"
-          )"
-          new_lock="$(
-            gh api -H 'Accept: application/vnd.github.raw+json'               "repos/$GITHUB_REPOSITORY/contents/upstream.lock.json?ref=$current_sha"
-          )"
-          old_revision="$(jq -r '[.tag, .commit] | @tsv' <<<"$old_lock")"
-          new_revision="$(jq -r '[.tag, .commit] | @tsv' <<<"$new_lock")"
-          if [[ "$old_revision" == "$new_revision" ]]; then
-            echo 'changed=false' >> "$GITHUB_OUTPUT"
-          else
-            echo 'changed=true' >> "$GITHUB_OUTPUT"
+          version="$(jq -er '.tag' <<< "$lock")"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 1
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v${version}-web.0" >/dev/null 2>&1; then
+            echo "v${version}-web.0 already exists; use Patch release or publication recovery." >&2
+            exit 1
           fi
           echo "source_sha=$current_sha" >> "$GITHUB_OUTPUT"
-          {
-            echo "Trigger push SHA: `$GITHUB_SHA`"
-            echo "Inspected current $default_branch SHA: `$current_sha`"
-          } >> "$GITHUB_STEP_SUMMARY"
+          echo "Manual upstream qualification for $version at $current_sha" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Start full browser qualification
-        if: steps.upstream.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           SOURCE_SHA: ${{ steps.upstream.outputs.source_sha }}

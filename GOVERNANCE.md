@@ -28,17 +28,20 @@ The current protected `master` ruleset requires:
 - CodeQL enforcement at the repository's configured threshold.
 
 CODEOWNERS is intentionally scoped to sensitive paths rather than the entire repository. The
-Renovate platform-update pair remains outside CODEOWNERS so the routine Microsoft update pipeline
-can merge, qualify, publish, and promote without a per-release human gate.
+Renovate platform lock inputs remain outside CODEOWNERS so validated Microsoft updates can
+merge without a per-release human gate. Routine publication is scheduled for Thursday.
 
 The exact trusted Renovate auto-approval allowlist is:
 
 - `upstream.lock.json`
 - `builder-apt-snapshot.json`
 
-Both files must change together, with no additional paths. Approval requires successful
-pull-request `Full build qualification` and fail-closed validation of the upstream
-version/commit/source-date epoch and APT snapshot transformations. `builder-image.json`,
+Either a standalone `upstream.lock.json` update or that file together with
+`builder-apt-snapshot.json` may be approved, with no other paths. The upstream tag,
+commit and source date epoch must advance together and match the upstream Git commit.
+An included snapshot must also satisfy the approved timestamp transformation. Approval
+requires successful pull-request `Full build qualification`; snapshot-only updates require
+human review. `builder-image.json`,
 workflows, and other trust boundaries still require human review.
 
 Release tags are separately protected by the immutable-release-tag ruleset. Release publication
@@ -84,7 +87,7 @@ affects the stated trust boundary; a generic approval is not a substitute for th
 | `deploy/**` | Platform + Release | Runtime/container deployment and publication behavior |
 | `scripts/**` | Platform; add Security, Release, or Extension Policy when the script implements those boundaries | Repository scripts implement build, policy, qualification, packaging, and release controls |
 | `build.sh`, `package.sh`, `config/**`, `patches/**` | Platform; Security when trust/runtime boundaries change | These inputs materially define generated distribution behavior |
-| `upstream.lock.json` and `builder-apt-snapshot.json` (together) | Automated platform-update exception | Only the exact two-file data-only change is eligible for bot approval, after pull-request `Full build qualification` and content validation; neither file alone qualifies |
+| `upstream.lock.json` and optionally `builder-apt-snapshot.json` | Automated platform-update exception | Only a validated upstream-lock update, alone or with the timestamp-only snapshot lock, is eligible for bot approval after full PR qualification; snapshot-only updates require human review |
 | Release workflows/actions and `docs/releasing.md` / `OPERATIONS.md` | Release + Platform; Security when publication authority or integrity changes | Controls immutable tag creation, publication, recovery, and operator procedure |
 
 The existing [Contributing](CONTRIBUTING.md) trust-boundary review requirements still apply even
@@ -104,8 +107,9 @@ ruleset, CODEOWNERS, CodeQL, or required checks. Record the exception in migrati
 remove it when qualified team coverage is available.
 
 `upstream.lock.json` and `builder-apt-snapshot.json` are deliberately not CODEOWNED. The
-Renovate auto-approval workflow accepts only that exact pair after pull-request
-`Full build qualification` and content validation; either file alone is insufficient.
+Renovate auto-approval workflow accepts an upstream-lock update alone or with the APT snapshot
+after pull-request `Full build qualification` and content validation. Snapshot-only changes
+still require human review.
 Changes to the approval automation and immutable `builder-image.json` identity are CODEOWNED.
 
 ### Future team-backed review
@@ -121,7 +125,7 @@ explicit documented dual-review procedure.
 `.github/CODEOWNERS` is active during the two-developer phase and uses only the two real current
 maintainers. It is intentionally limited to sensitive paths. There is no repository-wide catch-all,
 because ordinary pull requests are already subject to the branch review rule and the narrowly
-validated Renovate platform-update pair must remain humanless.
+validated upstream-lock update (alone or with an APT snapshot) may remain humanless.
 
 The CODEOWNERS file itself is protected by its `.github/` rule. Repository policy tests pin the
 interim owner set and sensitive-path coverage so a pull request cannot silently expand automation,

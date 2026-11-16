@@ -231,11 +231,13 @@ together.
 
 ## Qualification source binding
 
-Automated upstream and patch release dispatches first resolve the exact project commit they inspect,
-then pass that commit to `Full build qualification` as `expected_source_sha`. The upstream trigger
-re-resolves the protected default branch on every run, including a GitHub workflow retry; the original
-push event is used only to identify the pre-change lock revision. The patch path also reads
-`upstream.lock.json` by its resolved immutable commit rather than by the moving default-branch name.
+On Thursdays at 09:00 UTC, the Patch release scheduler resolves protected `master` and compares
+its commit against the latest immutable release tag for the current pinned upstream version.
+It dispatches `release_mode=upstream` when no `web.0` exists, `release_mode=patch` when an
+unreleased project commit exists, and skips when the latest tag already has a published release
+for that same commit. The manual Upstream qualification trigger remains available to expedite a
+new Microsoft release. Both dispatchers bind the exact inspected commit as
+`expected_source_sha`; the lock is read at that immutable SHA, not a moving branch name.
 
 At workflow start, qualification checks the checked-out `GITHUB_SHA` against the expected SHA before
 planning, build, packaging, or release-tag work. A default-branch move between inspection and workflow

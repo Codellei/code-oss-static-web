@@ -33,7 +33,14 @@ if '--method' in args:
     Path(os.environ['APPROVAL_MARKER']).write_text('approved', encoding='utf-8')
 elif endpoint.endswith('/files'):
     if mode != 'empty':
-        print('\\n'.join(paths if mode != 'denied' else ('deploy/Dockerfile',)))
+        selected = paths
+        if mode in ('upstream_only', 'stale_epoch_upstream_only'):
+            selected = ('upstream.lock.json',)
+        elif mode == 'snapshot_only':
+            selected = ('builder-apt-snapshot.json',)
+        elif mode == 'denied':
+            selected = ('deploy/Dockerfile',)
+        print('\\n'.join(selected))
     if mode == 'identity_path':
         print('builder-image.json')
     if mode == 'unexpected':
@@ -103,7 +110,7 @@ class RenovateAutoApprovalTests(unittest.TestCase):
         group = next(
             rule for rule in config['packageRules'] if rule.get('groupSlug') == 'code-oss-platform'
         )
-        self.assertEqual(group['minimumGroupSize'], 3)
+        self.assertNotIn('minimumGroupSize', group)
         self.assertEqual(
             set(group['matchPackageNames']),
             {'microsoft/vscode', 'vscode-source-date-epoch', 'ubuntu-snapshot'},
@@ -156,6 +163,9 @@ class RenovateAutoApprovalTests(unittest.TestCase):
 
         cases = {
             'allowed': True,
+            'upstream_only': True,
+            'snapshot_only': False,
+            'stale_epoch_upstream_only': False,
             'empty': False,
             'denied': False,
             'unexpected': False,
@@ -190,6 +200,7 @@ class RenovateAutoApprovalTests(unittest.TestCase):
                         )
                     if mode in (
                         'stale_epoch',
+                        'stale_epoch_upstream_only',
                         'regressed_epoch',
                         'wrong_epoch',
                         'non_integer_epoch',
@@ -198,6 +209,7 @@ class RenovateAutoApprovalTests(unittest.TestCase):
                         lock = json.loads(upstream.read_text())
                         lock['sourceDateEpoch'] = {
                             'stale_epoch': 1790307657,
+                            'stale_epoch_upstream_only': 1790307657,
                             'regressed_epoch': 1790300000,
                             'wrong_epoch': 1791274553,
                             'non_integer_epoch': '1791274552',

@@ -1,6 +1,9 @@
 name: Patch release
 
 on:
+  # Thursday 09:00 UTC; first upstream releases and project patches share the same gate.
+  schedule:
+    - cron: '0 9 * * 4'
   workflow_dispatch:
 
 concurrency:
@@ -17,7 +20,7 @@ jobs:
       actions: write
       contents: read
     steps:
-      - name: Verify patch release is needed
+      - name: Select an unreleased protected master revision
         id: release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -26,11 +29,18 @@ jobs:
           set -euo pipefail
 
           default_branch="$(gh api "repos/$GITHUB_REPOSITORY" --jq '.default_branch')"
+          [[ "$default_branch" == master ]] || {
+            echo 'Scheduled release requires master as the protected default branch.' >&2
+            exit 1
+          }
           master_sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/$default_branch" --jq '.sha')"
+          [[ "$master_sha" =~ ^[0-9a-f]{40}$ ]] || exit 1
           lock="$(
-            gh api               -H 'Accept: application/vnd.github.raw+json'               "repos/$GITHUB_REPOSITORY/contents/upstream.lock.json?ref=$master_sha"
+            gh api -H 'Accept: application/vnd.github.raw+json' \
+              "repos/$GITHUB_REPOSITORY/contents/upstream.lock.json?ref=$master_sha"
           )"
-          version="$(jq -r '.tag' <<<"$lock")"
+          version="$(jq -er '.tag' <<< "$lock")"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 1
           prefix="refs/tags/v${version}-web."
 
           max_revision=-1
@@ -48,41 +58,59 @@ jobs:
               latest_tag="${ref#refs/tags/}"
             fi
           done < <(
-            gh api --paginate               "repos/$GITHUB_REPOSITORY/git/matching-refs/tags/v${version}-web."               --jq '.[].ref'
+            gh api --paginate \
+              "repos/$GITHUB_REPOSITORY/git/matching-refs/tags/v${version}-web." \
+              --jq '.[].ref'
           )
 
+          release_mode=patch
           if [[ "$found_zero" != 1 ]]; then
-            echo "No v${version}-web.0 exists; the Microsoft release path must publish web.0 first." >&2
-            exit 1
-          fi
-
-          latest_sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/$latest_tag" --jq '.sha')"
-          if [[ "$latest_sha" == "$master_sha" ]]; then
-            target_tag="$latest_tag"
-            intent='retry existing immutable publication'
+            if [[ "$GITHUB_EVENT_NAME" != schedule ]]; then
+              echo "No v${version}-web.0 exists; use Upstream qualification trigger." >&2
+              exit 1
+            fi
+            release_mode=upstream
+            target_tag="v${version}-web.0"
+            intent='qualify new Microsoft upstream release'
           else
-            target_tag="v${version}-web.$((max_revision + 1))"
-            intent='qualify new patch release'
+            latest_sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/$latest_tag" --jq '.sha')"
+            if [[ "$latest_sha" == "$master_sha" ]]; then
+              target_tag="$latest_tag"
+              intent='retry existing immutable publication'
+              if [[ "$GITHUB_EVENT_NAME" == schedule ]] &&
+                 gh api "repos/$GITHUB_REPOSITORY/releases/tags/$latest_tag" >/dev/null 2>&1; then
+                echo "No changes since published $latest_tag ($master_sha); skipping release." >> "$GITHUB_STEP_SUMMARY"
+                echo 'dispatch=false' >> "$GITHUB_OUTPUT"
+                exit 0
+              fi
+            else
+              target_tag="v${version}-web.$((max_revision + 1))"
+              intent='qualify new project patch release'
+            fi
           fi
 
+          echo "dispatch=true" >> "$GITHUB_OUTPUT"
+          echo "release_mode=$release_mode" >> "$GITHUB_OUTPUT"
           echo "default_branch=$default_branch" >> "$GITHUB_OUTPUT"
           echo "source_sha=$master_sha" >> "$GITHUB_OUTPUT"
           echo "target_tag=$target_tag" >> "$GITHUB_OUTPUT"
           {
-            echo "Patch release target: $target_tag"
+            echo "Release target: $target_tag"
             echo "Source commit: $master_sha"
             echo "Intent: $intent"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Start patch qualification or publication recovery
+      - name: Start qualified upstream or patch release
+        if: steps.release.outputs.dispatch == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           DEFAULT_BRANCH: ${{ steps.release.outputs.default_branch }}
           SOURCE_SHA: ${{ steps.release.outputs.source_sha }}
+          RELEASE_MODE: ${{ steps.release.outputs.release_mode }}
         run: >-
           gh workflow run qualify.yml
           --repo "$GITHUB_REPOSITORY"
           --ref "$DEFAULT_BRANCH"
           -f browser=all
-          -f release_mode=patch
+          -f release_mode="$RELEASE_MODE"
           -f expected_source_sha="$SOURCE_SHA"

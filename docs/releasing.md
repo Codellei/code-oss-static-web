@@ -1,8 +1,9 @@
 # Releasing
 
-Microsoft Code - OSS updates normally create, verify, publish, and promote automatically. Project-side
-fixes can publish an explicit patch revision without waiting for another Microsoft release. Immutable
-release creation is separate from mutable canary/stable deployment state.
+Microsoft Code - OSS dependency updates are proposed on Mondays and releases are dispatched on
+Thursdays only when protected `master` has unreleased changes. Project-side fixes can still publish
+an explicit patch revision on demand. Immutable release creation is separate from mutable
+canary/stable deployment state.
 
 ## Version contract
 
@@ -21,26 +22,47 @@ The revision has two meanings:
 The revision is monotonic for each Microsoft version. Release tags are never moved or reused for a
 different commit.
 
-## Automatic Microsoft release
+## Weekly dependency and publication cadence
 
-Renovate tracks `microsoft/vscode` and updates the exact upstream tag and tag commit in
-`upstream.lock.json`. Renovate dependency PRs use the normal cheap repository checks and are
-eligible for auto-merge; ordinary dependency updates do not build or deploy Code - OSS.
+Renovate runs its dependency update window on **Monday 00:00–05:59 UTC**, for all managers,
+including `microsoft/vscode`. Its optional platform group has **no minimum group size**: an
+available VS Code update can open a PR even without a new Ubuntu snapshot. Renovate also tracks
+the upstream commit timestamp as `sourceDateEpoch`; a valid upstream-lock change must update
+the tag, commit and epoch together. The trusted bot approval permits exactly
+`upstream.lock.json`, optionally paired with `builder-apt-snapshot.json`, after successful PR
+qualification and strict content validation. A snapshot-only update requires human approval.
+Normal branch checks, CodeQL and protected-path human review still apply. An update is not
+guaranteed to merge merely because its PR was created.
 
-When a merged `master` commit actually changes the pinned Microsoft tag or commit, the upstream
-qualification trigger re-resolves current protected `master`, inspects the lock at that immutable
-commit, and dispatches `Full build qualification` with all browsers, `release_mode=upstream`, and
-that current commit as `expected_source_sha`. If `master` moves again before qualification starts,
-qualification fails before planning; re-running the upstream trigger resolves and binds the new
-current `master` instead of reusing the original push SHA. Metadata-only lock changes do not trigger
-that expensive path.
+Renovate may complete auto-merges after Monday when checks finish; the Monday window only
+controls dependency branch creation and updates, not the timing of GitHub's merge execution.
+
+On **Thursday at 09:00 UTC**, the existing **Patch release** workflow runs on a schedule and
+resolves current protected `master` to an exact source SHA. It compares the pinned upstream
+version with immutable `v*-web.N` tags:
+
+- A new Microsoft version without `web.0` dispatches all-browser qualification in
+  `release_mode=upstream` and publishes `v<code-oss-version>-web.0`.
+- A changed `master` on a previously published upstream version dispatches all-browser
+  qualification in `release_mode=patch` and publishes the next `web.N`.
+- If the newest version tag already references the same `master` commit and its GitHub
+  Release exists, the scheduled run skips publication.
+- If the tag points at the same commit but its publication is absent, the existing
+  artifact-only publication recovery path is used.
+
+A `master` change between dispatch and qualification is rejected by the
+`expected_source_sha` guard. All existing security, reproducibility, vulnerability,
+immutable-tag, OCI, canary and stable-promotion gates remain mandatory. Scheduled Actions
+runs are best-effort and may be delayed by GitHub.
+
+For an urgent upstream release, manually run **Upstream qualification trigger** on current
+protected `master`. This no longer triggers on every upstream-lock push; it uses the same
+full qualification pipeline as Thursday. To expedite a project patch, manually run
+**Patch release**. Manual patch runs retain their recovery behavior.
 
 After build, Chromium/Firefox/WebKit qualification, packaging and qualification attestations all
-succeed, the workflow creates exactly:
-
-```text
-v<code-oss-version>-web.0
-```
+succeed, the workflow creates the selected immutable release tag: `web.0` for a newly pinned
+Microsoft upstream version, or the next `web.N` for an already-published version.
 
 The terminal release-intent gate rejects a successful workflow when tooling, planning, build,
 browser, OCI serving, packaging, attestation, or release dispatch was skipped or failed.
@@ -67,8 +89,9 @@ The override does not relax the Grype vulnerability admission threshold.
 
 ## Project patch release
 
-Use the **Patch release** workflow when a project-owned source, packaging, workflow, container, or
-security fix must ship before the next Microsoft release.
+Use **Patch release** manually when a project-owned source, packaging, workflow, container, or
+security fix must ship before Thursday. The same workflow automatically handles new upstream
+releases and changed project commits on Thursdays.
 
 The dispatcher is fail-closed. It resolves one exact default-branch commit, reads the upstream lock
 from that immutable commit, and passes the same commit as `expected_source_sha` to qualification.

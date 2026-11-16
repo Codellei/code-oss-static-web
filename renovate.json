@@ -9,7 +9,7 @@
   ],
   "packageRules": [
     {
-      "description": "One platform PR updates VS Code tag, commit, source date epoch and Ubuntu snapshot",
+      "description": "Group available Code OSS platform inputs without blocking on missing peers",
       "matchManagers": [
         "custom.regex"
       ],
@@ -20,7 +20,6 @@
       ],
       "groupName": "Code OSS platform and Ubuntu snapshot",
       "groupSlug": "code-oss-platform",
-      "minimumGroupSize": 3,
       "separateMajorMinor": false,
       "semanticCommitType": "chore",
       "semanticCommitScope": "upstream",
@@ -28,12 +27,19 @@
     },
     {
       "description": "Group routine GitHub Actions updates weekly",
-      "matchManagers": ["github-actions"],
-      "matchPackageNames": ["!anchore/sbom-action"],
-      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchPackageNames": [
+        "!anchore/sbom-action"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest"
+      ],
       "groupName": "Weekly GitHub Actions",
-      "groupSlug": "weekly-github-actions",
-      "schedule": ["* 0-5 * * 1"]
+      "groupSlug": "weekly-github-actions"
     }
   ],
   "platformAutomerge": true,
@@ -98,5 +104,10 @@
         "{\"releases\":[{\"version\":$fromMillis($toMillis(published_at)-172800000,\"[Y0001][M01][D01]T000000Z\")}],\"sourceUrl\":\"https://snapshot.ubuntu.com/\"}"
       ]
     }
-  }
+  },
+  "timezone": "UTC",
+  "schedule": [
+    "* 0-5 * * 1"
+  ],
+  "updateNotScheduled": false
 }
